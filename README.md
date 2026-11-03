@@ -86,3 +86,10 @@ This tool inspects the certificate presented by a user-specified endpoint using 
 
 This project is licensed under the [MIT License](LICENSE)
 
+## Art × Science | The Creative Museum
+
+SSL Certificate Status is a cybersecurity-origins exhibit: an educational Python utility for inspecting certificate metadata. Its output is not a proof of secure connectivity, identity or certificate trust, as explained in the TLS trust boundary above.
+
+Explore the [temporary LuckyGitHub777 Art × Science Museum preview](https://luckygithub777.github.io/golden-ratio-frequency-lab/museum-preview/) and its safe Origins Lab. This is a public visitor preview within an existing Pages site; it is not yet the final dedicated museum. The underlying private workshops and source histories are not exposed through this link. Full signed-out browser acceptance remains separately tracked.
+
+*Imagination opens the door. Engineering makes it real. Evidence keeps us honest.*
