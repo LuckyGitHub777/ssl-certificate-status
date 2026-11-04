@@ -15,6 +15,8 @@ It displays expiration dates, issuer details, and days remaining — useful for 
   - Days remaining until expiration
 - Accepts single host via CLI or prompts interactively
 - Supports custom ports (e.g., `example.com:8443`)
+- Supports bare IPv6 addresses and bracketed IPv6 with custom ports (e.g., `[2001:db8::1]:8443`)
+- Invalid or out-of-range explicit ports report a warning and retain the default port (443)
 - Gracefully handles invalid input, DNS errors, and interruptions
 - Cross-platform compatible (Windows, macOS, Linux)
 
