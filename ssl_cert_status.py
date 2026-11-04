@@ -57,7 +57,7 @@ def parse_host_port(input_str, default_port=443):
     return host.strip(), default_port
 
 def check_ssl_cert(hostname, port=443):
-    """Connects to the server and prints SSL certificate information."""
+    """Inspect a presented certificate; return True only after parsing it."""
     context = ssl._create_unverified_context()
 
     try:
@@ -66,11 +66,11 @@ def check_ssl_cert(hostname, port=443):
                 der_cert = ssock.getpeercert(binary_form=True)
                 if not der_cert:
                     print("No certificate received.")
-                    return
+                    return False
                 x509 = crypto.load_certificate(crypto.FILETYPE_ASN1, der_cert)
     except Exception as e:
         print(f"\nError connecting or retrieving certificate: {e}\n")
-        return
+        return False
 
     try:
         date_format = '%Y%m%d%H%M%SZ'
@@ -87,15 +87,17 @@ def check_ssl_cert(hostname, port=443):
         print(f"  - Valid From:     {not_before}")
         print(f"  - Valid Until:    {not_after}")
         print(f"  - Days Remaining: {days_left} days\n")
+        return True
 
     except Exception as parse_err:
         print(f"Failed to parse certificate: {parse_err}")
+        return False
 
 if __name__ == "__main__":
     if len(sys.argv) >= 2:
         host_input = sys.argv[1]
         host, port = parse_host_port(host_input)
-        check_ssl_cert(host, port)
+        sys.exit(0 if check_ssl_cert(host, port) else 1)
     else:
         while True:
             try:
