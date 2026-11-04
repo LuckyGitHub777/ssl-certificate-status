@@ -20,15 +20,41 @@ if os.name == 'nt':
         pass  # Safe fallback for older Python versions
 
 def parse_host_port(input_str, default_port=443):
-    """Parses 'hostname[:port]' format, returns tuple of (hostname, port)."""
-    if ':' in input_str:
-        host, port = input_str.split(':', 1)
+    """Parse hostname[:port], bare IPv6, or [IPv6]:port.
+
+    Invalid or out-of-range explicit ports retain the historical default-port
+    fallback. This is only endpoint parsing, not certificate trust validation.
+    """
+    value = input_str.strip()
+    host = value
+    port_text = None
+
+    if value.startswith('['):
+        closing = value.find(']')
+        if closing != -1:
+            candidate = value[1:closing].strip()
+            remainder = value[closing + 1:].strip()
+            if not remainder:
+                host = candidate
+            elif remainder.startswith(':'):
+                host = candidate
+                port_text = remainder[1:]
+            # An invalid bracket suffix remains an invalid hostname, rather
+            # than silently interpreting it as a legitimate IPv6 endpoint.
+    elif value.count(':') == 1:
+        host, port_text = value.rsplit(':', 1)
+    # Multiple colons without brackets indicate a bare IPv6 literal.
+    # A custom port for IPv6 must use the unambiguous [IPv6]:port syntax.
+
+    if port_text is not None:
         try:
-            return host.strip(), int(port.strip())
+            port = int(port_text.strip())
+            if not 1 <= port <= 65535:
+                raise ValueError("Port outside TCP range")
+            return host.strip(), port
         except ValueError:
-            print("Invalid port. Using default 443.")
-            return host.strip(), default_port
-    return input_str.strip(), default_port
+            print(f"Invalid port. Using default {default_port}.")
+    return host.strip(), default_port
 
 def check_ssl_cert(hostname, port=443):
     """Connects to the server and prints SSL certificate information."""
