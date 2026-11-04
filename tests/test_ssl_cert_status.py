@@ -22,6 +22,33 @@ class ParseHostPortTests(unittest.TestCase):
         self.assertIn("Invalid port", output.getvalue())
 
 
+    def test_bare_ipv6_literal(self):
+        self.assertEqual(tool.parse_host_port("2001:db8::1"), ("2001:db8::1", 443))
+        self.assertEqual(tool.parse_host_port("::1"), ("::1", 443))
+
+    def test_bracketed_ipv6_with_and_without_port(self):
+        self.assertEqual(tool.parse_host_port("[::1]:8443"), ("::1", 8443))
+        self.assertEqual(tool.parse_host_port("[2001:db8::1]"), ("2001:db8::1", 443))
+
+    def test_out_of_range_and_missing_ports_keep_default(self):
+        for port in ("0", "-1", "65536", ""):
+            with self.subTest(port=port), contextlib.redirect_stdout(io.StringIO()) as output:
+                self.assertEqual(tool.parse_host_port("example.invalid:" + port),
+                                 ("example.invalid", 443))
+            self.assertIn("Invalid port", output.getvalue())
+
+    def test_bracketed_ipv6_invalid_port_keeps_default(self):
+        with contextlib.redirect_stdout(io.StringIO()) as output:
+            self.assertEqual(tool.parse_host_port("[::1]:65536"), ("::1", 443))
+        self.assertIn("Invalid port", output.getvalue())
+
+    def test_custom_default_port_is_reported(self):
+        with contextlib.redirect_stdout(io.StringIO()) as output:
+            self.assertEqual(tool.parse_host_port("example.invalid:bad", default_port=9443),
+                             ("example.invalid", 9443))
+        self.assertIn("9443", output.getvalue())
+
+
 class InspectionBoundaryTests(unittest.TestCase):
     def test_mocked_certificate_is_reported_without_claiming_trust(self):
         certificate = MagicMock()
