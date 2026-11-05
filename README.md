@@ -91,3 +91,10 @@ This tool inspects the certificate presented by a user-specified endpoint using 
 ## ⚖️ License
 
 This project is licensed under the [MIT License](LICENSE)
+
+## Continue exploring
+
+- [Guardian](https://github.com/LuckyGitHub777/guardian-assurance-public) — local-first, evidence-bounded publication assurance.
+- [CISSP Study Guide](https://github.com/LuckyGitHub777/cissp) — a collection of cybersecurity learning resources.
+
+[Browse the other public projects](https://github.com/LuckyGitHub777?tab=repositories).
