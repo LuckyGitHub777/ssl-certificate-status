@@ -19,11 +19,11 @@ if os.name == 'nt':
     except Exception:
         pass  # Safe fallback for older Python versions
 
-def parse_host_port(input_str, default_port=443):
+def parse_host_port(input_str, default_port=443, *, reject_invalid_port=False):
     """Parse hostname[:port], bare IPv6, or [IPv6]:port.
 
-    Invalid or out-of-range explicit ports retain the historical default-port
-    fallback. This is only endpoint parsing, not certificate trust validation.
+    The importable parser preserves default-port fallback unless explicitly
+    asked to reject invalid ports. This is not TLS trust validation.
     """
     value = input_str.strip()
     host = value
@@ -53,6 +53,8 @@ def parse_host_port(input_str, default_port=443):
                 raise ValueError("Port outside TCP range")
             return host.strip(), port
         except ValueError:
+            if reject_invalid_port:
+                raise ValueError("Invalid TCP port") from None
             print(f"Invalid port. Using default {default_port}.")
     return host.strip(), default_port
 
@@ -105,7 +107,11 @@ def check_ssl_cert(hostname, port=443):
 if __name__ == "__main__":
     if len(sys.argv) >= 2:
         host_input = sys.argv[1]
-        host, port = parse_host_port(host_input)
+        try:
+            host, port = parse_host_port(host_input, reject_invalid_port=True)
+        except ValueError:
+            print("Invalid port. Inspection cancelled.")
+            sys.exit(2)
         sys.exit(0 if check_ssl_cert(host, port) else 1)
     else:
         while True:
@@ -116,7 +122,11 @@ if __name__ == "__main__":
                     break
                 if not user_input:
                     continue
-                host, port = parse_host_port(user_input)
+                try:
+                    host, port = parse_host_port(user_input, reject_invalid_port=True)
+                except ValueError:
+                    print("Invalid port. Inspection cancelled.")
+                    continue
                 check_ssl_cert(host, port)
             except KeyboardInterrupt:
                 print("\nInterrupted. Exiting.")
