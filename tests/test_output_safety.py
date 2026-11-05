@@ -11,14 +11,12 @@ import ssl_cert_status as tool
 
 class OutputSafetyTests(unittest.TestCase):
     def test_text_field_escapes_control_and_direction_formatters(self):
-        original = "Synthetic\\n\\x1b[31m\\u202e"
+        original = "Synthetic" + chr(10) + chr(27) + "[31m" + chr(0x202E)
         display = tool._safe_field(original)
-        self.assertNotIn("\\n", display)
-        self.assertNotIn("\\x1b", display)
-        self.assertNotIn("\\u202e", display)
-        self.assertIn("\\\\u000a", display)
-        self.assertIn("\\\\u001b", display)
-        self.assertIn("\\\\u202e", display)
+        for forbidden in (chr(10), chr(27), chr(0x202E)):
+            self.assertNotIn(forbidden, display)
+        for escaped in ("u000a", "u001b", "u202e"):
+            self.assertIn(chr(92) + escaped, display)
         self.assertLessEqual(len(tool._safe_field("x" * 1000)), 256)
 
     def test_connection_exception_does_not_echo_sensitive_input(self):
@@ -26,21 +24,21 @@ class OutputSafetyTests(unittest.TestCase):
         with (
             patch.object(tool.ssl, "_create_unverified_context"),
             patch.object(tool.socket, "create_connection",
-                         side_effect=OSError(marker + "\\n\\x1b[2J")),
+                         side_effect=OSError(marker + chr(10) + chr(27) + "[2J")),
             contextlib.redirect_stdout(io.StringIO()) as out,
         ):
             result = tool.check_ssl_cert("example.invalid")
         self.assertIs(result, False)
         self.assertIn("Error connecting or retrieving certificate", out.getvalue())
         self.assertNotIn(marker, out.getvalue())
-        self.assertNotIn("\\x1b", out.getvalue())
+        self.assertNotIn(chr(27), out.getvalue())
 
     def test_untrusted_certificate_labels_are_terminal_safe(self):
         cert = MagicMock()
         cert.get_notBefore.return_value = b"20300101000000Z"
         cert.get_notAfter.return_value = b"20310101000000Z"
-        cert.get_subject.return_value = SimpleNamespace(CN="Synthetic\\nsubject")
-        cert.get_issuer.return_value = SimpleNamespace(CN="Issuer\\x1b[2J\\u202e")
+        cert.get_subject.return_value = SimpleNamespace(CN="Synthetic" + chr(10) + "subject")
+        cert.get_issuer.return_value = SimpleNamespace(CN="Issuer" + chr(27) + "[2J" + chr(0x202E))
         context = MagicMock()
         context.wrap_socket.return_value.__enter__.return_value.getpeercert.return_value = b"synthetic-der"
         with (
@@ -53,10 +51,10 @@ class OutputSafetyTests(unittest.TestCase):
         rendered = out.getvalue()
         self.assertIs(result, True)
         self.assertIn("TLS Trust:      NOT VERIFIED", rendered)
-        self.assertIn("Synthetic\\\\u000asubject", rendered)
-        self.assertIn("Issuer\\\\u001b[2J\\\\u202e", rendered)
-        self.assertNotIn("\\x1b", rendered)
-        self.assertNotIn("\\u202e", rendered)
+        self.assertIn("Synthetic" + chr(92) + "u000asubject", rendered)
+        self.assertIn("Issuer" + chr(92) + "u001b[2J" + chr(92) + "u202e", rendered)
+        self.assertNotIn(chr(27), rendered)
+        self.assertNotIn(chr(0x202E), rendered)
 
     def test_parse_exception_not_echoed(self):
         cert = MagicMock()
