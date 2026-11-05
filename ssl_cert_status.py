@@ -89,7 +89,7 @@ def check_ssl_cert(hostname, port=443):
         issuer = x509.get_issuer().CN
         days_left = (not_after - datetime.now(timezone.utc)).days
 
-        print(f"\nSSL Certificate Information for {hostname}:{port}\n")
+        print(f"\nSSL Certificate Information for {_safe_field(hostname)}:{_safe_field(port)}\n")
         print("  - TLS Trust:      NOT VERIFIED (chain, hostname, revocation)")
         print(f"  - Issued To:      {_safe_field(issued_to)}")
         print(f"  - Issuer:         {_safe_field(issuer)}")
