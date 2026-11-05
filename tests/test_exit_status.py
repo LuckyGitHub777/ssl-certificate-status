@@ -76,6 +76,47 @@ class InspectionStatusTests(unittest.TestCase):
                 runpy.run_path(tool.__file__, run_name="__main__")
         self.assertEqual(exit_result.exception.code, 1)
 
+    def test_direct_invalid_explicit_ports_fail_closed_without_network(self):
+        for endpoint in ("example.invalid:bad", "example.invalid:0",
+                         "example.invalid:65536", "example.invalid:",
+                         "[::1]:65536"):
+            with (
+                self.subTest(endpoint=endpoint),
+                patch.object(tool.socket, "create_connection") as connect,
+                patch.object(sys, "argv", ["ssl_cert_status.py", endpoint]),
+                contextlib.redirect_stdout(io.StringIO()) as out,
+            ):
+                with self.assertRaises(SystemExit) as result:
+                    runpy.run_path(tool.__file__, run_name="__main__")
+            self.assertEqual(result.exception.code, 2)
+            connect.assert_not_called()
+            self.assertIn("Invalid port. Inspection cancelled.", out.getvalue())
+
+    def test_interactive_invalid_explicit_port_skips_network(self):
+        with (
+            patch("builtins.input", side_effect=["example.invalid:bad", "exit"]),
+            patch.object(tool.socket, "create_connection") as connect,
+            patch.object(sys, "argv", ["ssl_cert_status.py"]),
+            contextlib.redirect_stdout(io.StringIO()) as out,
+        ):
+            runpy.run_path(tool.__file__, run_name="__main__")
+        connect.assert_not_called()
+        self.assertIn("Invalid port. Inspection cancelled.", out.getvalue())
+        self.assertIn("Exiting.", out.getvalue())
+
+    def test_direct_valid_custom_port_still_inspects_selected_endpoint(self):
+        with (
+            patch.object(tool.ssl, "_create_unverified_context", return_value=self.context),
+            patch.object(tool.socket, "create_connection", return_value=MagicMock()) as connect,
+            patch.object(tool.crypto, "load_certificate", return_value=self.cert),
+            patch.object(sys, "argv", ["ssl_cert_status.py", "example.invalid:8443"]),
+            contextlib.redirect_stdout(io.StringIO()),
+        ):
+            with self.assertRaises(SystemExit) as result:
+                runpy.run_path(tool.__file__, run_name="__main__")
+        self.assertEqual(result.exception.code, 0)
+        connect.assert_called_once_with(("example.invalid", 8443), timeout=10)
+
     def test_direct_command_success_exits_zero_without_network(self):
         with (
             patch.object(tool.ssl, "_create_unverified_context", return_value=self.context),
