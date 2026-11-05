@@ -77,7 +77,7 @@ class InspectionBoundaryTests(unittest.TestCase):
     def test_success_header_escapes_user_supplied_terminal_controls(self):
         # The caller-selected hostname is not a trusted certificate field.
         # Synthetic controls must never alter terminal output after inspection.
-        hostname = "demo\\x1b[31m.example.invalid".replace("\\x1b", "\x1b")
+        hostname = "demo\x1b[31m.example.invalid"
         certificate = MagicMock()
         certificate.get_notBefore.return_value = b"20300101000000Z"
         certificate.get_notAfter.return_value = b"20310101000000Z"
