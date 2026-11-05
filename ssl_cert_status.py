@@ -56,6 +56,14 @@ def parse_host_port(input_str, default_port=443):
             print(f"Invalid port. Using default {default_port}.")
     return host.strip(), default_port
 
+def _safe_field(value):
+    """Render untrusted certificate text without terminal control characters."""
+    return "".join(
+        ch if ch.isprintable() else f"\\u{ord(ch):04x}"
+        for ch in str(value)
+    )[:256]
+
+
 def check_ssl_cert(hostname, port=443):
     """Inspect a presented certificate; return True only after parsing it."""
     context = ssl._create_unverified_context()
@@ -68,8 +76,9 @@ def check_ssl_cert(hostname, port=443):
                     print("No certificate received.")
                     return False
                 x509 = crypto.load_certificate(crypto.FILETYPE_ASN1, der_cert)
-    except Exception as e:
-        print(f"\nError connecting or retrieving certificate: {e}\n")
+    except Exception:
+        # Exceptions may include caller input, URLs or local machine details.
+        print("\nError connecting or retrieving certificate.\n")
         return False
 
     try:
@@ -82,15 +91,15 @@ def check_ssl_cert(hostname, port=443):
 
         print(f"\nSSL Certificate Information for {hostname}:{port}\n")
         print("  - TLS Trust:      NOT VERIFIED (chain, hostname, revocation)")
-        print(f"  - Issued To:      {issued_to}")
-        print(f"  - Issuer:         {issuer}")
+        print(f"  - Issued To:      {_safe_field(issued_to)}")
+        print(f"  - Issuer:         {_safe_field(issuer)}")
         print(f"  - Valid From:     {not_before}")
         print(f"  - Valid Until:    {not_after}")
         print(f"  - Days Remaining: {days_left} days\n")
         return True
 
-    except Exception as parse_err:
-        print(f"Failed to parse certificate: {parse_err}")
+    except Exception:
+        print("Failed to parse certificate.")
         return False
 
 if __name__ == "__main__":
