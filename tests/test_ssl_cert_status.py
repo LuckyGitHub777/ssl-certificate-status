@@ -74,6 +74,31 @@ class InspectionBoundaryTests(unittest.TestCase):
         make_context.assert_called_once_with()
         connect.assert_called_once_with(("example.invalid", 443), timeout=10)
 
+    def test_success_header_escapes_user_supplied_terminal_controls(self):
+        # The caller-selected hostname is not a trusted certificate field.
+        # Synthetic controls must never alter terminal output after inspection.
+        hostname = "demo\\x1b[31m.example.invalid".replace("\\x1b", "\x1b")
+        certificate = MagicMock()
+        certificate.get_notBefore.return_value = b"20300101000000Z"
+        certificate.get_notAfter.return_value = b"20310101000000Z"
+        certificate.get_subject.return_value = SimpleNamespace(CN="example.invalid")
+        certificate.get_issuer.return_value = SimpleNamespace(CN="Synthetic CA")
+        connection = MagicMock()
+        context = MagicMock()
+        context.wrap_socket.return_value.__enter__.return_value.getpeercert.return_value = b"synthetic-der"
+        with (
+            patch.object(tool.ssl, "_create_unverified_context", return_value=context),
+            patch.object(tool.socket, "create_connection", return_value=connection) as connect,
+            patch.object(tool.crypto, "load_certificate", return_value=certificate),
+            contextlib.redirect_stdout(io.StringIO()) as output,
+        ):
+            self.assertTrue(tool.check_ssl_cert(hostname, 443))
+        rendered = output.getvalue()
+        self.assertIn("SSL Certificate Information for demo\\u001b[31m.example.invalid:443", rendered)
+        self.assertNotIn("\x1b", rendered)
+        connect.assert_called_once_with((hostname, 443), timeout=10)
+
+
     def test_connection_error_is_reported_safely(self):
         with (
             patch.object(tool.ssl, "_create_unverified_context"),
