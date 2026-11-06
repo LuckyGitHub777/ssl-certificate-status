@@ -10,6 +10,12 @@ import ssl_cert_status as tool
 
 
 class ParseHostPortTests(unittest.TestCase):
+    def test_empty_hostname_and_broken_brackets_are_invalid_even_with_fallback(self):
+        for endpoint in ("", " ", ":443", "[]:443", "[::1", "[::1]junk"):
+            with self.subTest(endpoint=endpoint):
+                with self.assertRaisesRegex(ValueError, "Invalid hostname"):
+                    tool.parse_host_port(endpoint)
+
     def test_default_port(self):
         self.assertEqual(tool.parse_host_port("example.invalid"), ("example.invalid", 443))
 
