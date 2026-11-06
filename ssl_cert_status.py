@@ -89,7 +89,16 @@ def check_ssl_cert(hostname, port=443):
         not_after = datetime.strptime(x509.get_notAfter().decode('ascii'), date_format).replace(tzinfo=timezone.utc)
         issued_to = x509.get_subject().CN
         issuer = x509.get_issuer().CN
-        days_left = (not_after - datetime.now(timezone.utc)).days
+        now = datetime.now(timezone.utc)
+        days_left = (not_after - now).days
+        if not_after <= not_before:
+            date_window = "INVALID DATE RANGE"
+        elif now < not_before:
+            date_window = "NOT YET VALID"
+        elif now >= not_after:
+            date_window = "EXPIRED"
+        else:
+            date_window = "WITHIN DATES (trust not verified)"
 
         print(f"\nSSL Certificate Information for {_safe_field(hostname)}:{_safe_field(port)}\n")
         print("  - TLS Trust:      NOT VERIFIED (chain, hostname, revocation)")
@@ -97,6 +106,7 @@ def check_ssl_cert(hostname, port=443):
         print(f"  - Issuer:         {_safe_field(issuer)}")
         print(f"  - Valid From:     {not_before}")
         print(f"  - Valid Until:    {not_after}")
+        print(f"  - Date Window:    {date_window}")
         print(f"  - Days Remaining: {days_left} days\n")
         return True
 
