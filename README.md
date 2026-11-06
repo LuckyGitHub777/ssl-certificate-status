@@ -1,7 +1,15 @@
 # SSL Certificate Status Checker
 
-A lightweight Python 3 tool that checks the SSL/TLS certificate details of any hostname and port.  
-It displays expiration dates, issuer details, and days remaining — useful for system admins, DevOps, or anyone who needs to monitor certificates.
+**Inspect the certificate a website presents, including its issuer and expiration date.** A small Python CLI for IT operations, monitoring, and learning how TLS certificates are structured.
+
+## Try it
+
+```bash
+python -m pip install -r requirements.txt
+python ssl_cert_status.py example.com
+```
+
+Replace `example.com` with a hostname you are authorized to inspect. You will see the presented certificate's dates, issuer and days remaining. **Inspection does not verify certificate trust, hostname identity, or endpoint safety**—see [TLS trust boundary](#tls-trust-boundary).
 
 ---
 
