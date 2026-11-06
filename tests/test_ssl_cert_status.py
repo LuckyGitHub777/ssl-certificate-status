@@ -50,6 +50,41 @@ class ParseHostPortTests(unittest.TestCase):
 
 
 class InspectionBoundaryTests(unittest.TestCase):
+    def test_date_window_states_do_not_claim_tls_trust(self):
+        from datetime import datetime, timedelta, timezone
+
+        now = datetime.now(timezone.utc)
+        cases = (
+            ("WITHIN DATES (trust not verified)", -2, 2),
+            ("NOT YET VALID", 2, 10),
+            ("EXPIRED", -10, -2),
+            ("INVALID DATE RANGE", 10, -10),
+        )
+        for expected, before_days, after_days in cases:
+            with self.subTest(window=expected):
+                cert = MagicMock()
+                cert.get_notBefore.return_value = (
+                    now + timedelta(days=before_days)
+                ).strftime("%Y%m%d%H%M%SZ").encode("ascii")
+                cert.get_notAfter.return_value = (
+                    now + timedelta(days=after_days)
+                ).strftime("%Y%m%d%H%M%SZ").encode("ascii")
+                cert.get_subject.return_value = SimpleNamespace(CN="example.invalid")
+                cert.get_issuer.return_value = SimpleNamespace(CN="Synthetic CA")
+                context = MagicMock()
+                context.wrap_socket.return_value.__enter__.return_value.getpeercert.return_value = b"synthetic-der"
+                with (
+                    patch.object(tool.ssl, "_create_unverified_context", return_value=context),
+                    patch.object(tool.socket, "create_connection", return_value=MagicMock()),
+                    patch.object(tool.crypto, "load_certificate", return_value=cert),
+                    contextlib.redirect_stdout(io.StringIO()) as out,
+                ):
+                    result = tool.check_ssl_cert("example.invalid")
+                self.assertIs(result, True)
+                self.assertIn("Date Window:    " + expected, out.getvalue())
+                self.assertIn("TLS Trust:      NOT VERIFIED", out.getvalue())
+
+
     def test_mocked_certificate_is_reported_without_claiming_trust(self):
         certificate = MagicMock()
         certificate.get_notBefore.return_value = b"20300101000000Z"

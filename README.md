@@ -13,6 +13,7 @@ It displays expiration dates, issuer details, and days remaining — useful for 
   - Issuer CN
   - Validity period (Not Before / Not After)
   - Days remaining until expiration
+  - Explicit date-window classification (not yet valid, expired, within dates, or invalid date range)
 - Accepts single host via CLI or prompts interactively
 - Supports custom ports (e.g., `example.com:8443`)
 - Supports bare IPv6 addresses and bracketed IPv6 with custom ports (e.g., `[2001:db8::1]:8443`)
@@ -71,6 +72,7 @@ SSL Certificate Information for example.com:443
   - Issuer:         Example CA
   - Valid From:     2030-06-01 00:00:00+00:00
   - Valid Until:    2030-09-01 00:00:00+00:00
+  - Date Window:    <classified at runtime; does not verify trust>
   - Days Remaining: <calculated at runtime>
 ```
 
@@ -78,7 +80,7 @@ SSL Certificate Information for example.com:443
 
 ## TLS trust boundary
 
-This tool inspects the certificate presented by a user-specified endpoint using an **unverified TLS connection**, allowing inspection even when a certificate is expired, self-signed, or otherwise untrusted. A displayed expiration date is **not** a certificate-trust, hostname-identity, revocation, or server-security verdict. Do not use the output alone to authenticate or approve a remote service.
+This tool inspects the certificate presented by a user-specified endpoint using an **unverified TLS connection**, allowing inspection even when a certificate is expired, self-signed, or otherwise untrusted. The date-window label describes only the relationship between the certificate's stated validity dates and the current UTC time; **WITHIN DATES is not a trusted/secure verdict**. A displayed expiration date is **not** a certificate-trust, hostname-identity, revocation, or server-security verdict. Do not use the output alone to authenticate or approve a remote service.
 
 ---
 
