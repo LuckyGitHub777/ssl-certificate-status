@@ -26,11 +26,15 @@ def parse_host_port(input_str, default_port=443, *, reject_invalid_port=False):
     asked to reject invalid ports. This is not TLS trust validation.
     """
     value = input_str.strip()
+    if not value:
+        raise ValueError("Invalid hostname")
     host = value
     port_text = None
 
     if value.startswith('['):
         closing = value.find(']')
+        if closing == -1:
+            raise ValueError("Invalid hostname")
         if closing != -1:
             candidate = value[1:closing].strip()
             remainder = value[closing + 1:].strip()
@@ -39,12 +43,16 @@ def parse_host_port(input_str, default_port=443, *, reject_invalid_port=False):
             elif remainder.startswith(':'):
                 host = candidate
                 port_text = remainder[1:]
-            # An invalid bracket suffix remains an invalid hostname, rather
-            # than silently interpreting it as a legitimate IPv6 endpoint.
+            else:
+                raise ValueError("Invalid hostname")
+            # Invalid bracket suffixes must not reach network resolution.
     elif value.count(':') == 1:
         host, port_text = value.rsplit(':', 1)
     # Multiple colons without brackets indicate a bare IPv6 literal.
     # A custom port for IPv6 must use the unambiguous [IPv6]:port syntax.
+
+    if not host.strip():
+        raise ValueError("Invalid hostname")
 
     if port_text is not None:
         try:
@@ -54,7 +62,7 @@ def parse_host_port(input_str, default_port=443, *, reject_invalid_port=False):
             return host.strip(), port
         except ValueError:
             if reject_invalid_port:
-                raise ValueError("Invalid TCP port") from None
+                raise ValueError("Invalid port") from None
             print(f"Invalid port. Using default {default_port}.")
     return host.strip(), default_port
 
@@ -119,8 +127,8 @@ if __name__ == "__main__":
         host_input = sys.argv[1]
         try:
             host, port = parse_host_port(host_input, reject_invalid_port=True)
-        except ValueError:
-            print("Invalid port. Inspection cancelled.")
+        except ValueError as error:
+            print(f"{error}. Inspection cancelled.")
             sys.exit(2)
         sys.exit(0 if check_ssl_cert(host, port) else 1)
     else:
@@ -134,8 +142,8 @@ if __name__ == "__main__":
                     continue
                 try:
                     host, port = parse_host_port(user_input, reject_invalid_port=True)
-                except ValueError:
-                    print("Invalid port. Inspection cancelled.")
+                except ValueError as error:
+                    print(f"{error}. Inspection cancelled.")
                     continue
                 check_ssl_cert(host, port)
             except KeyboardInterrupt:

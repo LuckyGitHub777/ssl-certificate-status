@@ -18,6 +18,7 @@ It displays expiration dates, issuer details, and days remaining — useful for 
 - Supports custom ports (e.g., `example.com:8443`)
 - Supports bare IPv6 addresses and bracketed IPv6 with custom ports (e.g., `[2001:db8::1]:8443`)
 - The CLI rejects malformed or out-of-range explicit ports without connecting; one-shot commands return exit status 2. The importable parser retains its historical fallback by default.
+- Empty hostnames and malformed bracket syntax are rejected before any network connection, including in interactive mode.
 - Gracefully handles invalid input, DNS errors, and interruptions
 - Cross-platform compatible (Windows, macOS, Linux)
 
@@ -33,7 +34,7 @@ python ssl_cert_status.py example.com
 
 ### Exit status for automated checks
 
-When you provide a hostname as a command-line argument, the process exits with **0** after successfully retrieving and parsing a certificate, or **1** when inspection fails (connection error, missing peer certificate, or unparseable certificate). Malformed explicit TCP ports exit with **2** without opening a connection. In interactive mode, the invalid entry is skipped so the next prompt can continue. The interactive prompt remains available for multiple lookups. A successful inspection exit status is **not** evidence of certificate-chain trust, hostname validation, revocation status, or endpoint safety; see the TLS trust boundary below.
+When you provide a hostname as a command-line argument, the process exits with **0** after successfully retrieving and parsing a certificate, or **1** when inspection fails (connection error, missing peer certificate, or unparseable certificate). Malformed explicit TCP ports, empty hostnames, and malformed bracketed endpoints exit with **2** without opening a connection. In interactive mode, the invalid entry is skipped so the next prompt can continue. The interactive prompt remains available for multiple lookups. A successful inspection exit status is **not** evidence of certificate-chain trust, hostname validation, revocation status, or endpoint safety; see the TLS trust boundary below.
 
 ### Interactive mode (multiple lookups)
 

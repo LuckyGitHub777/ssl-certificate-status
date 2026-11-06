@@ -104,6 +104,33 @@ class InspectionStatusTests(unittest.TestCase):
         self.assertIn("Invalid port. Inspection cancelled.", out.getvalue())
         self.assertIn("Exiting.", out.getvalue())
 
+    def test_empty_and_malformed_hosts_fail_closed_without_connecting(self):
+        for endpoint in ("", "  ", ":443", " :8443 ", "[]:443",
+                         "[::1", "[::1]not-a-port-suffix"):
+            with (
+                self.subTest(endpoint=endpoint),
+                patch.object(tool.socket, "create_connection") as connect,
+                patch.object(sys, "argv", ["ssl_cert_status.py", endpoint]),
+                contextlib.redirect_stdout(io.StringIO()) as out,
+            ):
+                with self.assertRaises(SystemExit) as result:
+                    runpy.run_path(tool.__file__, run_name="__main__")
+            self.assertEqual(result.exception.code, 2)
+            connect.assert_not_called()
+            self.assertIn("Invalid hostname. Inspection cancelled.", out.getvalue())
+
+    def test_interactive_invalid_hostname_never_connects(self):
+        with (
+            patch("builtins.input", side_effect=[":443", "[]:443", "exit"]),
+            patch.object(tool.socket, "create_connection") as connect,
+            patch.object(sys, "argv", ["ssl_cert_status.py"]),
+            contextlib.redirect_stdout(io.StringIO()) as out,
+        ):
+            runpy.run_path(tool.__file__, run_name="__main__")
+        connect.assert_not_called()
+        self.assertEqual(out.getvalue().count("Invalid hostname. Inspection cancelled."), 2)
+        self.assertIn("Exiting.", out.getvalue())
+
     def test_direct_valid_custom_port_still_inspects_selected_endpoint(self):
         with (
             patch.object(tool.ssl, "_create_unverified_context", return_value=self.context),
