@@ -42,7 +42,7 @@ python ssl_cert_status.py example.com
 
 ### Exit status for automated checks
 
-When you provide a hostname as a command-line argument, the process exits with **0** after successfully retrieving and parsing a certificate, or **1** when inspection fails (connection error, missing peer certificate, or unparseable certificate). Malformed explicit TCP ports, empty hostnames, and malformed bracketed endpoints exit with **2** without opening a connection. In interactive mode, the invalid entry is skipped so the next prompt can continue. The interactive prompt remains available for multiple lookups. A successful inspection exit status is **not** evidence of certificate-chain trust, hostname validation, revocation status, or endpoint safety; see the TLS trust boundary below.
+When you provide a hostname as a command-line argument, the process exits with **0** after successfully retrieving and parsing a certificate, or **1** when inspection fails (connection error, missing peer certificate, or unparseable certificate). Malformed explicit TCP ports, empty hostnames, and malformed bracketed endpoints exit with **2** without opening a connection. In interactive mode, the invalid entry is skipped so the next prompt can continue. The interactive prompt remains available for multiple lookups. An internally inconsistent certificate validity range (not-after at or before not-before) is explicitly labeled **INVALID DATE RANGE** and also exits with status **1**; it must not be treated as a successful inspection. A successful inspection exit status is **not** evidence of certificate-chain trust, hostname validation, revocation status, or endpoint safety; see the TLS trust boundary below.
 
 ### Interactive mode (multiple lookups)
 
