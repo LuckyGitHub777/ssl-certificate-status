@@ -86,7 +86,7 @@ class InspectionBoundaryTests(unittest.TestCase):
                     contextlib.redirect_stdout(io.StringIO()) as out,
                 ):
                     result = tool.check_ssl_cert("example.invalid")
-                self.assertIs(result, True)
+                self.assertIs(result, expected != "INVALID DATE RANGE")
                 self.assertIn("Date Window:    " + expected, out.getvalue())
                 self.assertIn("TLS Trust:      NOT VERIFIED", out.getvalue())
 
