@@ -116,7 +116,7 @@ def check_ssl_cert(hostname, port=443):
         print(f"  - Valid Until:    {not_after}")
         print(f"  - Date Window:    {date_window}")
         print(f"  - Days Remaining: {days_left} days\n")
-        return True
+        return date_window != "INVALID DATE RANGE"
 
     except Exception:
         print("Failed to parse certificate.")
