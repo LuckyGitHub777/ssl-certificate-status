@@ -2,7 +2,11 @@
 
 **Inspect the certificate a website presents, including its issuer and expiration date.** A small Python CLI for IT operations, monitoring, and learning how TLS certificates are structured.
 
-## Try it
+## Explore online
+
+[**Visit the TLS Certificate Observatory**](https://luckygithub777.github.io/ssl-certificate-status/) for a browser-based educational overview of validity windows, issuer information, and certificate-trust boundaries. This website is a learning experience; the actual certificate-inspection program remains the Python CLI below and is **not** executed by the static web page.
+
+## Run the inspector
 
 ```bash
 python -m pip install -r requirements.txt
