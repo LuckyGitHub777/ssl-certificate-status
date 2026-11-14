@@ -14,4 +14,4 @@ If GitHub's private **Report a vulnerability** option is available under this re
 
 Reports should identify the affected file/version, observed impact, and minimal sanitized reproduction information. There is no stated service-level agreement or guarantee that a report will be fixed. Do not perform unauthorized testing.
 
-This policy does not declare the repository or any associated website free from vulnerabilities. Existing ownership and licensing terms remain unchanged.
+This policy does not declare the repository or any associated website free from vulnerabilities.
